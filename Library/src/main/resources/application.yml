@@ -10,4 +10,4 @@ spring:
 
 server:
   error:
-    include-stacktrace: never
+    include-stacktrace: on_param
