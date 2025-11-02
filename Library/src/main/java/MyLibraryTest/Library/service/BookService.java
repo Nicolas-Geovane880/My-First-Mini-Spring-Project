@@ -8,7 +8,12 @@ import MyLibraryTest.Library.mapper.BookMapper;
 import MyLibraryTest.Library.repository.BookRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import java.util.Comparator;
 import java.util.List;
 
@@ -21,14 +26,21 @@ public class BookService {
 
     private final BookMapper bookMapper;
 
-    public List<BookResponse> findAll () {
-        List<BookResponse> bookResponses = bookRepository.findAll().stream()
-                .map(bookMapper::toResponse)
-                .toList();
+    public Page<BookResponse> findAll (int page, int size) {
+        Page<Book> allPages = bookRepository.findAll(PageRequest.of(page, size));
 
-        if (bookResponses.isEmpty()) throw new BookNotFoundException("No book found.");
+        List<Book> allBooks = allPages.get().toList();
 
-        return bookResponses;
+        if (allBooks.isEmpty()) throw new BookNotFoundException("No book found.");
+
+        List<BookResponse> bookResponses = allBooks.stream().map(b -> BookResponse.builder()
+                .name(b.getName())
+                .price(b.getPrice())
+                .authorName(b.getAuthorName())
+                .releaseYear(b.getReleaseYear())
+                .build()).toList();
+
+        return new PageImpl<>(bookResponses, PageRequest.of(page, size), bookResponses.size());
     }
 
     public Book findBy (String name, Long id) {
